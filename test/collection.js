@@ -31,6 +31,19 @@ $(document).ready(function() {
     equals(col.getByCid(col.first().cid), col.first());
   });
 
+  test("Collection: update index when id changes", function() {
+    var col = new Backbone.Collection();
+    col.add([
+      {id : 1, name : 'one'},
+      {id : 2, name : 'two'}
+    ]);
+    var one = col.get(1);
+    equals(one.get('name'), 'one');
+    one.set({id : 101});
+    equals(col.get(1), null);
+    equals(col.get(101).get('name'), 'one');
+  });
+
   test("Collection: at", function() {
     equals(col.at(2), b);
   });
@@ -80,6 +93,10 @@ $(document).ready(function() {
     });
     var coll = new Collection;
     equals(coll.one, 1);
+  });
+
+  test("Collection: toJSON", function() {
+    equals(JSON.stringify(col), '[{"id":1,"label":"d"},{"id":2,"label":"c"},{"id":3,"label":"b"},{"id":4,"label":"a"}]');
   });
 
   test("Collection: Underscore methods", function() {
