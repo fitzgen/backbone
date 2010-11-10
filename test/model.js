@@ -19,7 +19,8 @@ $(document).ready(function() {
     length : 123
   };
 
-  var doc = new Backbone.Model(attrs);
+  var proxy = Backbone.Model.extend();
+  var doc = new proxy(attrs);
 
   var klass = Backbone.Collection.extend({
     url : function() { return '/collection'; }
@@ -32,9 +33,21 @@ $(document).ready(function() {
     var Model = Backbone.Model.extend({
       initialize: function() {
         this.one = 1;
+        equals(this.collection, collection);
       }
     });
-    var model = new Model;
+    var model = new Model({}, {collection: collection});
+    equals(model.one, 1);
+    equals(model.collection, collection);
+  });
+
+  test("Model: initialize with attributes and options", function() {
+    var Model = Backbone.Model.extend({
+      initialize: function(attributes, options) {
+        this.one = options.one;
+      }
+    });
+    var model = new Model({}, {one: 1});
     equals(model.one, 1);
   });
 
@@ -96,6 +109,21 @@ $(document).ready(function() {
     ok(changeCount == 2, "Change count should have incremented for unset.");
   });
 
+  test("Model: set an empty string", function() {
+    var model = new Backbone.Model({name : "Model"});
+    model.set({name : ''});
+    equals(model.get('name'), '');
+  });
+
+  test("Model: clear", function() {
+    var changed;
+    var model = new Backbone.Model({name : "Model"});
+    model.bind("change:name", function(){ changed = true; });
+    model.clear();
+    equals(changed, true);
+    equals(model.get('name'), undefined);
+  });
+
   test("Model: changed, hasChanged, changedAttributes, previous, previousAttributes", function() {
     var model = new Backbone.Model({name : "Tim", age : 10});
     model.bind('change', function() {
@@ -141,10 +169,37 @@ $(document).ready(function() {
     equals(result, model);
     equals(model.get('a'), 100);
     equals(lastError, undefined);
+    result = model.set({admin: true}, {silent: true});
+    equals(lastError, undefined);
+    equals(model.get('admin'), true);
     result = model.set({a: 200, admin: true});
     equals(result, false);
     equals(model.get('a'), 100);
     equals(lastError, "Can't change admin status.");
+  });
+
+  test("Model: validate on unset and clear", function() {
+    var error;
+    var model = new Backbone.Model({name: "One"});
+    model.validate = function(attrs) {
+      if ("name" in attrs) {
+        if (!attrs.name) {
+          error = true;
+          return "No thanks.";
+        }
+      }
+    };
+    model.set({name: "Two"});
+    equals(model.get('name'), 'Two');
+    equals(error, undefined);
+    model.unset('name');
+    equals(error, true);
+    equals(model.get('name'), 'Two');
+    model.clear();
+    equals(model.get('name'), 'Two');
+    delete model.validate;
+    model.clear();
+    equals(model.get('name'), undefined);
   });
 
   test("Model: validate with error callback", function() {

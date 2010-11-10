@@ -142,12 +142,15 @@
 <body>
 
   <div id="sidebar" class="interface">
+    
     <a class="toc_title" href="#">
-      Backbone.js <span class="version">(0.2.0)</span>
+      Backbone.js <span class="version">(0.3.0)</span>
     </a>
+    
     <a class="toc_title" href="#Introduction">
       Introduction
     </a>
+    
     <a class="toc_title" href="#Events">
       Events
     </a>
@@ -156,6 +159,7 @@
       <li>– <a href="#Events-unbind">unbind</a></li>
       <li>– <a href="#Events-trigger">trigger</a></li>
     </ul>
+    
     <a class="toc_title" href="#Model">
       Model
     </a>
@@ -165,6 +169,7 @@
       <li>– <a href="#Model-get">get</a></li>
       <li>– <a href="#Model-set">set</a></li>
       <li>– <a href="#Model-unset">unset</a></li>
+      <li>– <a href="#Model-clear">clear</a></li>
       <li>– <a href="#Model-id">id</a></li>
       <li>– <a href="#Model-cid">cid</a></li>
       <li>– <a href="#Model-attributes">attributes</a></li>
@@ -183,6 +188,7 @@
       <li>– <a href="#Model-previous">previous</a></li>
       <li>– <a href="#Model-previousAttributes">previousAttributes</a></li>
     </ul>
+    
     <a class="toc_title" href="#Collection">
       Collection
     </a>
@@ -208,12 +214,35 @@
       <li>– <a href="#Collection-refresh">refresh</a></li>
       <li>– <a href="#Collection-create">create</a></li>
     </ul>
+    
+    <a class="toc_title" href="#Controller">
+      Controller
+    </a>
+    <ul class="toc_section">
+      <li>– <a href="#Controller-extend">extend</a></li>
+      <li>– <a href="#Controller-routes">routes</a></li>
+      <li>– <a href="#Controller-constructor">constructor / initialize</a></li>
+      <li>– <a href="#Controller-route">route</a></li>
+      <li>– <a href="#Controller-saveLocation">saveLocation</a></li>
+    </ul>
+    
+    <a class="toc_title" href="#History">
+      History
+    </a>
+    <ul class="toc_section">
+      <li>– <a href="#History-start">start</a></li>
+      <li>– <a href="#History-saveLocation">saveLocation</a></li>
+    </ul>
+    
     <a class="toc_title" href="#Sync">
       Sync
     </a>
     <ul class="toc_section">
       <li>– <a href="#Sync">Backbone.sync</a></li>
+      <li>– <a href="#Sync-emulateHTTP">Backbone.emulateHTTP</a></li>
+      <li>– <a href="#Sync-emulateJSON">Backbone.emulateJSON</a></li>
     </ul>
+    
     <a class="toc_title" href="#View">
       View
     </a>
@@ -226,12 +255,15 @@
       <li>– <a href="#View-make">make</a></li>
       <li>– <a href="#View-delegateEvents">delegateEvents</a></li>
     </ul>
+    
     <a class="toc_title" href="#examples">
       Examples
     </a>
+    
     <a class="toc_title" href="#changelog">
       Change Log
     </a>
+    
   </div>
 
   <div class="container">
@@ -251,7 +283,8 @@
     <p>
       The project is <a href="http://github.com/documentcloud/backbone/">hosted on GitHub</a>,
       and the <a href="docs/backbone.html">annotated source code</a> is available,
-      as well as an online <a href="test/test.html">test suite</a>.
+      as well as an online <a href="test/test.html">test suite</a>, and 
+      <a href="examples/todos/index.html">example application</a>.
     </p>
 
     <p>
@@ -275,12 +308,12 @@
 
     <table>
       <tr>
-        <td><a href="backbone.js">Development Version (0.2.0)</a></td>
-        <td><i>24.8kb, Uncompressed with Comments</i></td>
+        <td><a href="backbone.js">Development Version (0.3.0)</a></td>
+        <td><i>33kb, Uncompressed with Comments</i></td>
       </tr>
       <tr>
-        <td><a href="backbone-min.js">Production Version (0.2.0)</a></td>
-        <td><i>2.6kb, Packed and Gzipped</i></td>
+        <td><a href="backbone-min.js">Production Version (0.3.0)</a></td>
+        <td><i>3.7kb, Packed and Gzipped</i></td>
       </tr>
     </table>
 
@@ -542,6 +575,13 @@ note.set({title: "October 12", content: "Lorem Ipsum Dolor Sit Amet..."});
       <br />
       Remove an attribute by deleting it from the internal attributes hash.
       Fires a <tt>"change"</tt> event unless <tt>silent</tt> is passed as an option.
+    </p>
+    
+    <p id="Model-clear">
+      <b class="header">clear</b><code>model.clear([options])</code>
+      <br />
+      Removes all attributes from the model. Fires a <tt>"change"</tt> event unless
+      <tt>silent</tt> is passed as an option.
     </p>
 
     <p id="Model-id">
@@ -1208,6 +1248,166 @@ var othello = NYPL.create({
 });
 </pre>
 
+    <h2 id="Controller">Backbone.Controller</h2>
+
+    <p>
+      Web applications often choose to change their URL fragment (<tt>#fragment</tt>)
+      in order to provide shareable, bookmarkable URLs for an Ajax-heavy application.
+      <b>Backbone.Controller</b> provides methods for routing client-side URL
+      fragments, and connecting them to actions and events.
+    </p>
+    
+    <p class="warning">
+      Backbone controllers do not yet make use of HTML5 <b>pushState</b> and 
+      <b>replaceState</b>. Currently, <b>pushState</b> and <b>replaceState</b> 
+      need special handling on the server-side, cause you to mint duplicate URLs, 
+      and have an incomplete API. We may start supporting them in the future 
+      when these issues have been resolved.
+    </p>
+    
+    <p id="Controller-extend">
+      <b class="header">extend</b><code>Backbone.Controller.extend(properties, [classProperties])</code>
+      <br />
+      Get started by creating a custom controller class. You'll 
+      want to define actions that are triggered when certain URL fragments are
+      matched, and provide a <a href="#Controller-routes">routes</a> hash
+      that pairs routes to actions.
+    </p>
+
+<pre>
+var Workspace = Backbone.Controller.extend({
+
+  routes: {
+    "help":                 "help"     // #help
+    "search/:query":        "search"   // #search/kiwis
+    "search/:query/p:page": "search"   // #search/kiwis/p7
+  },
+  
+  help: function() {
+    ...
+  },
+  
+  search: function(query, page) {
+    ...
+  }
+
+});
+</pre>
+
+    <p id="Controller-routes">
+      <b class="header">routes</b><code>controller.routes</code>
+      <br />
+      The routes hash maps URLs with parameters to functions on your controller,
+      similar to the <a href="#View">View</a>'s <a href="#View-delegateEvents">events hash</a>.
+      Routes can contain parameter parts, <tt>:param</tt>, which match a single URL
+      component between slashes; and splat parts <tt>*splat</tt>, which can match
+      any number of URL components.
+    </p>
+    
+    <p>
+      For example, a route of <tt>"search/:query/p:page"</tt> will match 
+      a fragment of <tt>#search/obama/p2</tt>, passing <tt>"obama"</tt> 
+      and <tt>"2"</tt> to the action. A route of <tt>"file/*path"</tt> will 
+      match <tt>#file/nested/folder/file.txt</tt>, 
+      passing <tt>"nested/folder/file.txt"</tt> to the action.
+    </p>
+    
+    <p>
+      When the visitor presses the back button, or enters a URL, and a particular
+      route is matched, the name of the action will be fired as an 
+      <a href="#Events">event</a>, so that other objects can listen to the controller,
+      and be notified. In the following example, visiting <tt>#help/uploading</tt>
+      will fire a <tt>route:help</tt> event from the controller.
+    </p>
+    
+<pre>
+routes: {
+  "help/:page":         "help",
+  "download/*path":     "download",
+  "folder/:name":       "openFolder",
+  "folder/:name-:mode": "openFolder"
+}
+</pre>
+
+<pre>
+controller.bind("route:help", function(page) {
+  ...
+});
+</pre>
+
+    <p id="Controller-constructor">
+      <b class="header">constructor / initialize</b><code>new Controller([options])</code>
+      <br />
+      When creating a new controller, you may pass its 
+      <a href="#Controller-routes">routes</a> hash directly as an option, if you 
+      choose. All <tt>options</tt> will also be passed to your <tt>initialize</tt> 
+      function, if defined.
+    </p>
+    
+    <p id="Controller-route">
+      <b class="header">route</b><code>controller.route(route, name, callback)</code>
+      <br />
+      Manually create a route for the controller, The <tt>route</tt> argument may
+      be a <a href="#Controller-routes">routing string</a> or regular expression.
+      Each matching capture from the route or regular expression will be passed as 
+      an argument to the callback. The <tt>name</tt> argument will be triggered as
+      a <tt>"route:name"</tt> event whenever the route is matched.
+    </p>
+    
+<pre>
+initialize: function(options) {
+  
+  // Matches #page/10, passing "10"
+  this.route("page/:number", "page", function(number){ ... });
+  
+  // Matches /117-a/b/c/open, passing "117-a/b/c"
+  this.route(/^(.*?)\/open$/, "open", function(id){ ... });
+  
+}
+</pre>
+
+    <p id="Controller-saveLocation">
+      <b class="header">saveLocation</b><code>controller.saveLocation(fragment)</code>
+      <br />
+      Whenever you reach a point in your application that you'd like to save
+      as a URL, call <b>saveLocation</b> in order to update the URL fragment
+      without triggering a <tt>hashchange</tt> event. (If you would prefer to
+      trigger the event and routing, you can just set the hash directly.)
+    </p>
+    
+<pre>
+openPage: function(pageNumber) {
+  this.document.pages.at(pageNumber).open();  
+  this.saveLocation("page/" + pageNumber);
+}
+</pre>
+    
+    <h2 id="History">Backbone.history</h2>
+
+    <p>
+      <b>History</b> serves as a global router (per frame) to handle <tt>hashchange</tt>
+      events, match the appropriate route, and trigger callbacks. You shouldn't 
+      ever have to create one of these yourself &mdash; you should use the reference
+      to <tt>Backbone.history</tt> that will be created for you automatically if you make use
+      of <a href="#Controller">Controllers</a> with <a href="#Controller-routes">routes</a>.
+    </p>
+    
+    <p id="History-start">
+      <b class="header">start</b><code>Backbone.history.start()</code>
+      <br />
+      When all of your <a href="#Controller">Controllers</a> have been created, 
+      and all of the routes are set up properly, call <tt>Backbone.history.start()</tt>
+      to begin monitoring <tt>hashchange</tt> events, and dispatching routes.
+    </p>
+    
+<pre>
+$(function(){
+  new WorkspaceController();
+  new HelpPaneController();
+  Backbone.history.start();
+});
+</pre>
+
     <h2 id="Sync">Backbone.sync</h2>
 
     <p>
@@ -1230,12 +1430,13 @@ var othello = NYPL.create({
     </ul>
 
     <p>
-      When formulating server responses for <b>Backbone.sync</b> requests,
-      model attributes will be sent up, serialized as JSON, under the <tt>model</tt>
-      parameter. When returning a JSON response, send down the model's representation
-      under the <tt>model</tt> key, and other keys can be used for additional out-of-band
-      information. When responding to a <tt>"read"</tt> request from a collection,
-      send down the array of model attribute hashes under the <tt>models</tt> key.
+      With the default implementation, when <b>Backbone.sync</b> sends up a request to save 
+      a model, its attributes will be passed, serialized as JSON, and sent in the HTTP body
+      with content-type <tt>application/json</tt>. When returning a JSON response, 
+      send down the attributes of the  model that have been changed by the server, and need 
+      to be updated on the client. When responding to a <tt>"read"</tt> request from a collection
+      (<a href="#Collection#fetch">Collection#fetch</a>), send down an array
+      of model attribute objects.
     </p>
 
     <p>
@@ -1250,21 +1451,8 @@ var othello = NYPL.create({
     </ul>
 
     <p>
-      If your web server makes it difficult to work with real <tt>PUT</tt> and
-      <tt>DELETE</tt> requests, you may choose to emulate them instead, using
-      HTTP <tt>POST</tt>, and passing them under the <tt>_method</tt> parameter
-      instead, by turning on <tt>Backbone.emulateHttp</tt>:
-    </p>
-
-<pre>
-Backbone.emulateHttp = true;
-
-model.save();  // Sends a POST to "/collection/id", with "_method=PUT"
-</pre>
-
-    <p>
       As an example, a Rails handler responding to an <tt>"update"</tt> call from
-      <b>Backbone.sync</b> might look like this: <i>(In real code, never use
+      <tt>Backbone</tt> might look like this: <i>(In real code, never use
       </i><tt>update_attributes</tt><i> blindly, and always whitelist the attributes
       you allow to be changed.)</i>
     </p>
@@ -1273,9 +1461,35 @@ model.save();  // Sends a POST to "/collection/id", with "_method=PUT"
 def update
   account = Account.find(params[:id])
   account.update_attributes JSON.parse params[:model]
-  render :json => {:model => account}
+  render :json => account
 end
 </pre>
+
+    <p id="Sync-emulateHTTP">
+      <b class="header">emulateHTTP</b><code>Backbone.emulateHTTP = true</code>
+      <br />
+      If you want to work with a legacy web server that doesn't support Backbones's
+      default REST/HTTP approach, you may choose to turn on <tt>Backbone.emulateHTTP</tt>.
+      Setting this option will fake <tt>PUT</tt> and <tt>DELETE</tt> requests with
+      a HTTP <tt>POST</tt>, and pass them under the <tt>_method</tt> parameter. Setting this option
+      will also set an <tt>X-HTTP-Method-Override</tt> header with the true method.
+    </p>
+
+<pre>
+Backbone.emulateHTTP = true;
+
+model.save();  // POST to "/collection/id", with "_method=PUT" + header.
+</pre>
+
+    <p id="Sync-emulateJSON">
+      <b class="header">emulateJSON</b><code>Backbone.emulateJSON = true</code>
+      <br />
+      If you're working with a legacy web server that can't handle requests
+      encoded as <tt>application/json</tt>, setting <tt>Backbone.emulateJSON = true;</tt>
+      will cause the JSON to be serialized under a <tt>model</tt> parameter, and 
+      the request to be made with a <tt>application/x-www-form-urlencoded</tt> 
+      mime type, as if from an HTML form.
+    </p>
 
     <h2 id="View">Backbone.View</h2>
 
@@ -1514,83 +1728,40 @@ var DocumentView = Backbone.View.extend({
     <h2 id="examples">Examples</h2>
 
     <p>
-      As a quick example to help get an idea of how Backbone can be used in a
-      real-world project, here are the method signatures (beyond the built-in
-      methods that Backbone provides) of the <b>Document</b>
-      model, and the <b>DocumentSet</b> collection, as used in
-      <a href="http://www.documentcloud.org">DocumentCloud</a>. In the workspace,
-      these classes work together with many others: <b>Project</b>, <b>Note</b>,
-      <b>Account</b>, <b>Entity</b>, <b>Organization</b>...
+      <a href="http://jgn.me/">Jérôme Gravel-Niquet</a> has contributed a
+      <a href="examples/todos/index.html">Todo List application</a>
+      that is bundled in the repository as Backbone example. If you're wondering
+      where to get started with Backbone in general, take a moment to
+      <a href="docs/todos.html">read through the annotated source</a>. The app uses a
+      <a href="docs/backbone-localstorage.html">LocalStorage adapter</a>
+      to transparently save all of your todos within your browser, instead of
+      sending them to a server. Jérôme also has a version hosted at
+      <a href="http://localtodos.com/">localtodos.com</a> that uses a
+      <a href="http://github.com/jeromegn/backbone-mootools">MooTools-backed version of Backbone</a>
+      instead of jQuery.
     </p>
 
-<pre>
-dc.model.Document = Backbone.Model.extend({
-
-  initialize(attributes): ...
-
-  canonicalId: ...
-
-  url: ...
-  viewerUrl: ...
-  publishedUrl: ...
-  pageThumbnailURL(page): ...
-
-  openViewer: ...
-  openPublishedViewer: ...
-  openText: ...
-  openPDF: ...
-
-  allowedToEdit: ...
-  checkAllowedToEdit(errorMessage): ...
-  checkBusy: ...
-
-  uniquePageEntities: ...
-
-  isPending: ...
-  isPublic: ...
-  isPublished: ...
-
-  toString: ...
-
-});
-
-
-dc.model.DocumentSet = Backbone.Collection.extend({
-
-  model: dc.model.Document,
-
-  url: '/documents',
-
-  initialize(options): ...
-
-  comparator(document): ...
-
-  selectAll: ...
-  deselectAll: ...
-  selectedIds: ...
-
-  filterPending: ...
-  filterSelected: ...
-
-  getCommonAttribute(documents, attribute): ...
-
-  allowedToEdit(documents, errorMessage): ...
-  editAccess(documents): ...
-
-  downloadSelectedViewers: ...
-  downloadSelectedPDFs: ...
-  downloadSelectedTexts: ...
-
-  poll: ...
-  startPolling: ...
-  stopPolling: ...
-
-  verifyDestroy(documents): ...
-
-});
-</pre>
+    <div style="text-align: center;">
+      <a href="examples/todos/index.html">
+        <img src="docs/images/todos.png" alt="Todos" style="margin: 10px auto;" />
+      </a>
+    </div>
 
     <h2 id="changelog">Change Log</h2>
+    
+    <p>
+      <b class="header">0.3.0</b> &mdash; <small><i>Nov 9, 2010</i></small><br />
+      Backbone now has <a href="#Controller">Controllers</a> and 
+      <a href="#History">History</a>, for doing client-side routing based on 
+      URL fragments.  
+      Added <tt>emulateHTTP</tt> to provide support for legacy servers that don't
+      do <tt>PUT</tt> and <tt>DELETE</tt>.
+      Added <tt>emulateJSON</tt> for servers that can't accept <tt>application/json</tt>
+      encoded requests.
+      Added <a href="#Model-clear">Model#clear</a>, which removes all attributes
+      from a model.
+      All Backbone classes may now be seamlessly inherited by CoffeeScript classes.
+    </p>
 
     <p>
       <b class="header">0.2.0</b> &mdash; <small><i>Oct 25, 2010</i></small><br />
@@ -1612,7 +1783,7 @@ dc.model.DocumentSet = Backbone.Collection.extend({
       as an option, which will be invoked if validation fails, overriding the
       <tt>"error"</tt> event.
       You can now tell backbone to use the <tt>_method</tt> hack instead of HTTP
-      methods by setting <tt>Backbone.emulateHttp = true</tt>.
+      methods by setting <tt>Backbone.emulateHTTP = true</tt>.
       Existing Model and Collection data is no longer sent up unnecessarily with
       <tt>GET</tt> and <tt>DELETE</tt> requests. Added a <tt>rake lint</tt> task.
       Backbone is now published as an <a href="http://npmjs.org">NPM</a> module.
